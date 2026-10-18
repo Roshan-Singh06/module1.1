@@ -12,6 +12,13 @@ st.caption(
     "Preliminary geometry tool only; not flight-validated."
 )
 
+def integrate_trapezoid(values, x):
+    """NumPy-version-compatible trapezoidal integration."""
+    if hasattr(np, "trapezoid"):
+        return np.trapezoid(values, x)
+    return np.trapz(values, x)
+
+
 DEFAULT_STATIONS = pd.DataFrame({
     "eta": [0.00, 0.25, 0.50, 0.75, 1.00],
     "leading_edge_x_m": [0.00, 0.025, 0.070, 0.145, 0.240],
@@ -155,15 +162,15 @@ def generate_wing(stations: pd.DataFrame, half_span: float, airfoil: str,
         raise ValueError("Leading-edge closure check failed.")
 
     # This is a geometric planform integral, not an aerodynamic calculation.
-    area_half = half_span * np.trapz(chord_half, eta_dense)
+    area_half = half_span * integrate_trapezoid(chord_half, eta_dense)
     area = 2.0 * area_half
     aspect_ratio = (2.0 * half_span)**2 / area
     # MAC for arbitrary chord distribution: integral(c^2 dy) / integral(c dy).
-    mac = np.trapz(chord_half**2, eta_dense) / np.trapz(chord_half, eta_dense)
+    mac = integrate_trapezoid(chord_half**2, eta_dense) / integrate_trapezoid(chord_half, eta_dense)
     y_mac = (
         half_span
-        * np.trapz(eta_dense * chord_half**2, eta_dense)
-        / np.trapz(chord_half**2, eta_dense)
+        * integrate_trapezoid(eta_dense * chord_half**2, eta_dense)
+        / integrate_trapezoid(chord_half**2, eta_dense)
     )
 
     return {
